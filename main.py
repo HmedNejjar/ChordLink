@@ -1,8 +1,9 @@
 from pathlib import Path
 from scanner import MP3Manager
 from utils import formatName
-from player import *
+from player import playlist, currentSongIndex, loadSongs, Play, PlayNext, PlayPrevious, Pause, Resume, AutoNextSong
 import sys
+import pygame
 
 """
 ChordLink Music Player - Terminal-Based Music Player
@@ -20,6 +21,9 @@ The program follows a hierarchical menu structure:
 
 Dependencies: pygame, pathlib
 """
+
+# Initialize Pygame video system to avoid "video system not initialized" errors
+pygame.init()
 
 def display_main_menu() -> None:
     """Display the main menu options - entry point of the application"""
@@ -45,7 +49,11 @@ def display_music_menu() -> None:
         # Display current playback status if a song is loaded
         if currentSongIndex >= 0 and playlist:
             current_song = playlist[currentSongIndex]
-            status = "▶ Playing" if pygame.mixer.music.get_busy() else "⏸ Paused"
+            # Check if music is playing - this requires Pygame video system to be initialized
+            try:
+                status = "▶ Playing" if pygame.mixer.music.get_busy() else "⏸ Paused"
+            except pygame.error:
+                status = "⏸ Paused"  # Fallback if there's an issue checking playback status
             print(f"\n{status}: {formatName(current_song)}")
         print("-"*50)
         
@@ -55,16 +63,23 @@ def display_music_menu() -> None:
             match (choice):  # Python 3.10+ match case for clean control flow
                 case "1":
                     # Play/Pause toggle - check current playback state
-                    if pygame.mixer.music.get_busy():
-                        Pause()
-                        print("⏸ Music paused")
-                    else:
+                    try:
+                        if pygame.mixer.music.get_busy():
+                            Pause()
+                            print("⏸ Music paused")
+                        else:
+                            if currentSongIndex >= 0:
+                                Resume()
+                                print("▶ Music resumed")
+                            else:
+                                Play(0)  # Start from first song if nothing is playing
+                                print("▶ Music started")
+                    except pygame.error as e:
+                        print(f"Audio error: {e}")
+                        # Fallback: if we can't determine state, just try to resume
                         if currentSongIndex >= 0:
                             Resume()
                             print("▶ Music resumed")
-                        else:
-                            Play(0)  # Start from first song if nothing is playing
-                            print("▶ Music started")
                 
                 case "2":
                     print("⏭ Next song...")
@@ -177,6 +192,7 @@ def main():
             elif choice == "2":
                 print("Thank you for using ChordLink! Goodbye!")
                 pygame.mixer.quit()  # Clean up pygame resources
+                pygame.quit()  # Clean up entire pygame system
                 sys.exit()  # Exit application
             
             else:
@@ -185,6 +201,7 @@ def main():
         except KeyboardInterrupt:
             print("\n\nInterrupted by user. Shutting down...")
             pygame.mixer.quit()  # Clean up on forced exit
+            pygame.quit()  # Clean up entire pygame system
             sys.exit()
         except Exception as e:
             print(f"An error occurred: {e}")  # Handle unexpected errors
