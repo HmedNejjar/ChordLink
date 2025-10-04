@@ -79,6 +79,39 @@ def Resume():
     else:
         print("Music is not paused")                    # Inform user if resume is not possible
 
+def TogglePlayPause():
+    """Toggle pause/resume or start playback without forcing first track restart."""
+    global is_paused, currentSongIndex, playlist
+    try:
+        # If currently paused, unpause
+        if is_paused:
+            pygame.mixer.music.unpause()
+            is_paused = False
+            print("Music resumed")
+            return "resumed"
+        # If currently playing, pause
+        if pygame.mixer.music.get_busy():
+            pygame.mixer.music.pause()
+            is_paused = True
+            print("Music paused")
+            return "paused"
+        # If nothing is playing but we have a current index, (re)start that song
+        if currentSongIndex >= 0 and 0 <= currentSongIndex < len(playlist):
+            pygame.mixer.music.load(str(playlist[currentSongIndex]))
+            pygame.mixer.music.play()
+            is_paused = False
+            print("Music started")
+            return "started"
+        # If no current song selected, start the first available
+        if playlist:
+            Play(0)
+            return "started"
+        print("Playlist is empty")
+        return "no_songs"
+    except pygame.error as e:
+        print(f"Audio error: {e}")
+        return "error"
+
 def AutoNextSong():
     """Check for song end events and automatically play next song"""
     for event in pygame.event.get():                    # Check all pygame events in the queue

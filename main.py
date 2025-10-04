@@ -1,7 +1,7 @@
 from pathlib import Path
 from scanner import MP3Manager
 from utils import formatName
-from player import playlist, currentSongIndex, loadSongs, Play, PlayNext, PlayPrevious, Pause, Resume, AutoNextSong
+from player import playlist, currentSongIndex, loadSongs, Play, PlayNext, PlayPrevious, Pause, TogglePlayPause, AutoNextSong
 import sys
 import pygame
 
@@ -62,24 +62,19 @@ def display_music_menu() -> None:
             
             match (choice):  # Python 3.10+ match case for clean control flow
                 case "1":
-                    # Play/Pause toggle - check current playback state
+                    # Use TogglePlayPause to reliably handle paused vs stopped states
                     try:
-                        if pygame.mixer.music.get_busy():
-                            Pause()
+                        result = TogglePlayPause()
+                        if result == "paused":
                             print("⏸ Music paused")
-                        else:
-                            if currentSongIndex >= 0:
-                                Resume()
-                                print("▶ Music resumed")
-                            else:
-                                Play(0)  # Start from first song if nothing is playing
-                                print("▶ Music started")
+                        elif result == "resumed":
+                            print("▶ Music resumed")
+                        elif result == "started":
+                            print("▶ Music started")
+                        elif result == "no_songs":
+                            print("No MP3 files found in the Songs folder!")
                     except pygame.error as e:
                         print(f"Audio error: {e}")
-                        # Fallback: if we can't determine state, just try to resume
-                        if currentSongIndex >= 0:
-                            Resume()
-                            print("▶ Music resumed")
                 
                 case "2":
                     print("⏭ Next song...")
