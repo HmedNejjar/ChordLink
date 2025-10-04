@@ -20,7 +20,7 @@ def loadSongs(songsList: list[Path]):
     songs = [song for song in songsList if song.suffix == '.mp3' and song.exists()] #Load all songs in the playlist in this list
     print(f"Loaded {len(songs)} songs")
 
-def Play(index = 0):
+def Play(index):
     global playlist, currentSongIndex
     
     if not playlist:
@@ -29,7 +29,7 @@ def Play(index = 0):
     elif 0<= index <= len(playlist):      
         pygame.mixer.music.load(str(playlist[index]))   #Load the first song
         pygame.mixer.music.play()                       #Play the song
-        currentSongIndex = index                        #Assgign the song's index to the global counter
+        currentSongIndex = index                        #Assign the song's index to the global counter
         print(f"Playing: {playlist[currentSongIndex]}")
     
     else:
